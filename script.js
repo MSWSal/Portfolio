@@ -9,11 +9,11 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // Lighting
-const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(50, 50, 50);
-directionalLight.castShadow = false;
+directionalLight.castShadow = true;
 // directionalLight.shadow.mapSize.width = 2048;
 // directionalLight.shadow.mapSize.height = 2048;
 scene.add(directionalLight);
@@ -84,7 +84,7 @@ function createLandscape() {
     }
     
     // Clouds scattered around the sky
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
         const cloudGroup = new THREE.Group();
         
         // Create cloud parts
@@ -144,6 +144,8 @@ loader.load('./Tree.glb',
     }
 );
 
+
+
 // Billboards
 function createBillboard(x, z, text) {
     const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 5);
@@ -178,7 +180,7 @@ function createBillboard(x, z, text) {
     scene.add(textMesh);
 }
 
-const bbText="Drop a mail and say Hi!!!"
+// const bbText="Drop a mail and say Hi!!!"
 // Add billboards
 // createBillboard(-20, -20, bbText);
 
@@ -219,6 +221,24 @@ deskLoader.load('./Desk.glb',
     }
 );
 
+// pine =====================================================
+let pine = null;
+const pineLoader = new THREE.GLTFLoader();
+pineLoader.load('./PalmTree.glb', 
+    function(gltf) {
+        pine = gltf.scene;
+        pine.traverse(function(child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        pine.position.set(-30, 0, 5);
+        pine.scale.set(4,4,4);
+        scene.add(pine);
+    }
+);
+
 // Phone
 let phone = null;
 const phoneLoader = new THREE.GLTFLoader();
@@ -254,6 +274,8 @@ grassLoader.load('./Sailboat.glb',
     }
 );
 
+
+
 // Boxes
 let boxes = null;
 const boxesLoader = new THREE.GLTFLoader();
@@ -271,6 +293,62 @@ boxesLoader.load('./Boxes.glb',
         scene.add(boxes);
     }
 );
+
+
+        // boxes.traverse(function(child) {
+        //     if (child.isMesh) {
+        //         child.castShadow = true;
+        //         child.receiveShadow = true;
+        //     }
+        // });
+        // boxes.position.set(31, 0, 35);
+        // boxes.scale.set(2, 2, 2);
+        // scene.add(boxes);
+
+// Computer
+let computer = null;
+const computerLoader = new THREE.GLTFLoader();
+computerLoader.load('./Computer.glb', 
+    function(gltf) {
+        computer = gltf.scene;
+        computer.traverse(function(child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        computer.position.set(-35, 1, 35);
+        computer.scale.set(2, 2, 2);
+        scene.add(computer);
+    }
+);
+
+// // Tall Grass
+// const tallGrassLoader = new THREE.GLTFLoader();
+// tallGrassLoader.load('./Tall Grass.glb', 
+//     function(gltf) {
+//         const tallGrassModel = gltf.scene;
+//         tallGrassModel.traverse(function(child) {
+//             if (child.isMesh) {
+//                 child.castShadow = true;
+//                 child.receiveShadow = true;
+//             }
+//         });
+        
+//         // Add 20 tall grass objects in random places
+//         for (let i = 0; i < 20; i++) {
+//             const tallGrass = tallGrassModel.clone();
+//             tallGrass.position.set(
+//                 Math.random() * 80 - 40,
+//                 0,
+//                 Math.random() * 80 - 40
+//             );
+//             tallGrass.scale.set(4,4,4);
+//             tallGrass.rotation.y = Math.random() * Math.PI * 2;
+//             scene.add(tallGrass);
+//         }
+//     }
+// );
 
 // People
 const people = [];
@@ -431,8 +509,8 @@ let isWalking = false;
 // Camera setup
 camera.position.set(0, 10, 10);
 let cameraAngle = 0;
-let cameraDistance = 8;
-let cameraHeight = 5;
+let cameraDistance = 6;
+let cameraHeight = 4;
 
 // Controls
 const keys = {};
@@ -454,6 +532,10 @@ document.addEventListener('keydown', (event) => {
             openPhoneMenu();
         } else if (nearbyBoxes) {
             downloadTranscript();
+        } else if (nearbyLighthouse) {
+            toggleLighthouse();
+        } else if (nearbyComputer && !computerMenuOpen) {
+            openComputerMenu();
         }
     }
 });
@@ -509,6 +591,8 @@ let nearbyDesk = false;
 let nearbyPhone = false;
 let phoneMenuOpen = false;
 let nearbyBoxes = false;
+let nearbyComputer = false;
+let computerMenuOpen = false;
 
 function sendEmail() {
     const subject = "Hi from a visitor";
@@ -519,8 +603,8 @@ function sendEmail() {
 
 function downloadPDF() {
     const link = document.createElement('a');
-    link.href = './sahanCV.pdf';
-    link.download = 'sahanCV.pdf';
+    link.href = './Sahan_Salgado_SE.pdf';
+    link.download = 'Sahan_Salgado_SE.pdf';
     link.click();
 }
 
@@ -565,6 +649,79 @@ function downloadTranscript() {
     link.click();
 }
 
+function openComputerMenu() {
+    computerMenuOpen = true;
+    const menuDiv = document.createElement('div');
+    menuDiv.id = 'computerMenu';
+    menuDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 1000;
+        font-family: Arial;
+        width: 600px;
+        max-height: 500px;
+        overflow-y: auto;
+    `;
+    
+    menuDiv.innerHTML = `
+        <h3>Education History</h3>
+
+        <div class="dropdown-item" onclick="toggleDropdown('education')" style="margin: 10px 0; cursor: pointer; padding: 10px; background: #333; border-radius: 5px;">2006 - 2019 ▼</div>
+        <div id="education" class="dropdown-content" style="display: none; padding: 10px; background: #222; margin: 5px 0; border-radius: 5px;">
+            <ul>
+                <li>2016 &nbsp;&nbsp;: &nbsp;Zonal Olympiad Mathematics &nbsp;-&nbsp; 2nd</li>
+                <li>2016 &nbsp;&nbsp;: &nbsp;Ordinary Level &nbsp;-&nbsp; 9A</li>
+                <li>2019 &nbsp;&nbsp;: &nbsp;Advanced Level &nbsp;-&nbsp; 3A</li>
+                <li>2019 &nbsp;&nbsp;: &nbsp;Best Student of Academic year 2019</li>
+            </ul>
+        </div>
+        
+        <div class="dropdown-item" onclick="toggleDropdown('skills')" style="margin: 10px 0; cursor: pointer; padding: 10px; background: #333; border-radius: 5px;">2021 - 2025 ▼</div>
+        <div id="skills" class="dropdown-content" style="display: none; padding: 10px; background: #222; margin: 5px 0; border-radius: 5px;">
+             <ul>
+                <li>2022 &nbsp;&nbsp;: &nbsp;MADHACK UCSC top 10 finalists</li>
+                <li>2025 &nbsp;&nbsp;: &nbsp;MADHACK 2.0 UCSC top 10 finalists</li>
+                <li>Director's List Awardee</li>
+                <li>2025 &nbsp;&nbsp;: &nbsp;Graduated Bsc in Software Engineering with Honours @ UCSC</li>
+                <li>GPA &nbsp;&nbsp;: &nbsp;3.59</li>
+            </ul>
+        </div>
+        
+        <div class="dropdown-item" onclick="toggleDropdown('projects')" style="margin: 10px 0; cursor: pointer; padding: 10px; background: #333; border-radius: 5px;">Industrial Experience ▼</div>
+        <div id="projects" class="dropdown-content" style="display: none; padding: 10px; background: #222; margin: 5px 0; border-radius: 5px;">
+            <ul>
+                <li>Software Engineering Intern : Zebra Technologies (6 months)</li>
+                <li>Software Engineer : Mobitel (Present)</li>
+            </ul>
+        </div>
+        
+        <div style="margin: 20px 0; cursor: pointer; padding: 10px; background: #666; border-radius: 5px; text-align: center;" onclick="closeComputerMenu();">Close</div>
+    `;
+    
+    document.body.appendChild(menuDiv);
+}
+
+function closeComputerMenu() {
+    computerMenuOpen = false;
+    const menu = document.getElementById('computerMenu');
+    if (menu) menu.remove();
+}
+
+function toggleDropdown(id) {
+    const content = document.getElementById(id);
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+    } else {
+        content.style.display = 'none';
+    }
+}
+
 function startInteraction(person) {
     person.isInteracting = true;
     const interactionDiv = document.getElementById('interaction');
@@ -573,7 +730,7 @@ function startInteraction(person) {
     setTimeout(() => {
         interactionDiv.style.display = 'none';
         person.isInteracting = false;
-    }, 3000);
+    }, 7000);
 }
 
 function update() {
@@ -611,9 +768,15 @@ function update() {
                     collision = true;
                 }
                 
-                // Boxes collision (at 0, 0, 0 with radius ~3)
-                const boxesDistance = Math.sqrt((newX - 0) ** 2 + (newZ - 0) ** 2);
+                // Boxes collision (at 31, 0, 35 with radius ~3)
+                const boxesDistance = Math.sqrt((newX - 31) ** 2 + (newZ - 35) ** 2);
                 if (boxesDistance < 4) {
+                    collision = true;
+                }
+                
+                // Computer collision (at 0, 0, 0 with radius ~3)
+                const computerDistance = Math.sqrt((newX - 0) ** 2 + (newZ - 0) ** 2);
+                if (computerDistance < 4) {
                     collision = true;
                 }
                 
@@ -718,6 +881,8 @@ function update() {
     nearbyDesk = false;
     nearbyPhone = false;
     nearbyBoxes = false;
+    nearbyLighthouse = false;
+    nearbyComputer = false;
     
     for (const person of people) {
         const distance = player.position.distanceTo(person.position);
@@ -755,25 +920,35 @@ function update() {
         }
     }
     
+    if (computer) {
+        const computerDistance = player.position.distanceTo(new THREE.Vector3(-35, 1, 35));
+        if (computerDistance < 6) {
+            nearbyComputer = true;
+        }
+    }
+    
     // Interaction UI
     const interactionDiv = document.getElementById('interaction');
     if (nearbyPerson && !nearbyPerson.isInteracting) {
         interactionDiv.style.display = 'block';
-        interactionDiv.innerHTML = 'Press E to interact';
+        interactionDiv.innerHTML = 'Press E to Talk';
     } else if (nearbyMailbox) {
         interactionDiv.style.display = 'block';
         interactionDiv.innerHTML = 'Press E to send email';
     } else if (nearbyDesk) {
         interactionDiv.style.display = 'block';
-        interactionDiv.innerHTML = 'Press E to download PDF';
+        interactionDiv.innerHTML = 'Press E to look at PDF';
     } else if (nearbyPhone && !phoneMenuOpen) {
         interactionDiv.style.display = 'block';
         interactionDiv.innerHTML = 'Press E to open social links';
     } else if (nearbyBoxes) {
         interactionDiv.style.display = 'block';
-        interactionDiv.innerHTML = 'Press E to download transcript';
-    } else if ((!nearbyPerson || nearbyPerson.isInteracting) && !nearbyMailbox && !nearbyDesk && !nearbyPhone && !nearbyBoxes) {
-        if (interactionDiv.innerHTML === 'Press E to interact' || interactionDiv.innerHTML === 'Press E to send email' || interactionDiv.innerHTML === 'Press E to download PDF' || interactionDiv.innerHTML === 'Press E to open social links' || interactionDiv.innerHTML === 'Press E to search for transcript') {
+        interactionDiv.innerHTML = 'Press E to Search for transcript';
+    } else if (nearbyComputer && !computerMenuOpen) {
+        interactionDiv.style.display = 'block';
+        interactionDiv.innerHTML = 'Press E to use computer';
+    } else if ((!nearbyPerson || nearbyPerson.isInteracting) && !nearbyMailbox && !nearbyDesk && !nearbyPhone && !nearbyBoxes && !nearbyComputer) {
+        if (interactionDiv.innerHTML === 'Press E to Talk' || interactionDiv.innerHTML === 'Press E to send email' || interactionDiv.innerHTML === 'Press E to look at PDF' || interactionDiv.innerHTML === 'Press E to open social links' || interactionDiv.innerHTML === 'Press E to Search for transcript' || interactionDiv.innerHTML === 'Press E to use computer') {
             interactionDiv.style.display = 'none';
         }
     }

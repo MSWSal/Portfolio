@@ -14,8 +14,14 @@ scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(50, 50, 50);
 directionalLight.castShadow = true;
-// directionalLight.shadow.mapSize.width = 2048;
-// directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.left = -100;
+directionalLight.shadow.camera.right = 100;
+directionalLight.shadow.camera.top = 100;
+directionalLight.shadow.camera.bottom = -100;
+directionalLight.shadow.camera.near = 0.1;
+directionalLight.shadow.camera.far = 200;
 scene.add(directionalLight);
 
 // Ground - Main playable area

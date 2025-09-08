@@ -572,24 +572,56 @@ document.addEventListener('mousemove', (event) => {
     }
 });
 
-// Touch controls for mobile/touchpad
+// Touch controls for mobile
+let touchMoving = false;
+let touchDirection = new THREE.Vector2();
+let touchStartTime = 0;
+const longPressDelay = 200;
+
 document.addEventListener('touchstart', (event) => {
-    if (event.touches.length === 1) {
-        mouseX = event.touches[0].clientX;
-    }
+    event.preventDefault();
+    touchStartTime = Date.now();
+    const touch = event.touches[0];
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+    touchDirection.set(x, y);
 });
 
 document.addEventListener('touchmove', (event) => {
-    if (event.touches.length === 1) {
-        const deltaX = event.touches[0].clientX - mouseX;
-        cameraAngle -= deltaX * 0.01;
-        mouseX = event.touches[0].clientX;
-    }
     event.preventDefault();
+    if (Date.now() - touchStartTime > longPressDelay) {
+        touchMoving = true;
+        const touch = event.touches[0];
+        const rect = renderer.domElement.getBoundingClientRect();
+        const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+        touchDirection.set(x, y);
+    }
+});
+
+document.addEventListener('touchend', (event) => {
+    event.preventDefault();
+    if (Date.now() - touchStartTime < longPressDelay && !touchMoving) {
+        if (nearbyPerson && !nearbyPerson.isInteracting) {
+            startInteraction(nearbyPerson);
+        } else if (nearbyMailbox) {
+            sendEmail();
+        } else if (nearbyDesk) {
+            downloadPDF();
+        } else if (nearbyPhone && !phoneMenuOpen) {
+            openPhoneMenu();
+        } else if (nearbyBoxes) {
+            downloadTranscript();
+        } else if (nearbyComputer && !computerMenuOpen) {
+            openComputerMenu();
+        }
+    }
+    touchMoving = false;
 });
 
 // Movement and interaction
-const moveSpeed = 0.3;
+const moveSpeed = 0.1;
 const mapBounds = 45;
 let nearbyPerson = null;
 let nearbyMailbox = false;
@@ -844,8 +876,16 @@ function update() {
         isWalking = true;
     }
     
-    // Rotate player to face movement direction
-    if (isWalking) {
+    // Touch movement
+    if (touchMoving) {
+        const moveVector = new THREE.Vector3(touchDirection.x, 0, -touchDirection.y).normalize();
+        player.position.add(moveVector.multiplyScalar(moveSpeed));
+        isWalking = true;
+        player.rotation.y = Math.atan2(moveVector.x, moveVector.z);
+    }
+    
+    // Rotate player to face movement direction (keyboard only)
+    if (isWalking && !touchMoving) {
         let targetAngle = cameraAngle + Math.PI;
         if (keys['KeyS']) targetAngle += Math.PI;
         if (keys['KeyA']) targetAngle += keys['KeyW'] ? Math.PI/4 : keys['KeyS'] ? -Math.PI/4 : Math.PI/2;
